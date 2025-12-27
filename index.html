@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS 클론 대시보드</title>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .card { background: white; padding: 2rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; width: 350px; margin-bottom: 20px; }
+        .profile-img { width: 80px; height: 80px; border-radius: 50%; background: #ddd; margin-bottom: 1rem; }
+        h2 { margin: 10px 0; color: #333; }
+        .status { display: inline-block; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; background: #e1f5fe; color: #0288d1; }
+        
+        /* 일정 테이블 스타일 */
+        .schedule-container { background: white; padding: 1.5rem; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 90%; max-width: 600px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #555; font-size: 0.9rem; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+        .status-done { background: #e8f5e9; color: #2e7d32; }
+        .status-ing { background: #fff3e0; color: #ef6c00; }
+    </style>
+</head>
+<body>
+
+    <div class="card" id="profile-card" style="display: none;">
+        <img src="https://via.placeholder.com/80" class="profile-img">
+        <h2 id="user-name">-</h2>
+        <p id="user-role" style="color:#666">-</p>
+        <div class="status" id="user-status">-</div>
+    </div>
+
+    <div class="schedule-container" id="schedule-container" style="display: none;">
+        <h3>🗓️ 이번 주 교육 일정</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>날짜</th>
+                    <th>구분</th>
+                    <th>상태</th>
+                    <th>활동비</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-list">
+                </tbody>
+        </table>
+    </div>
+
+    <div id="loader">데이터를 동기화 중입니다...</div>
+
+    <script>
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwdHWR8STpRe3tI8ZjyiukxCiKujotM3D_kfDqQnLTz_lBNd5so3-ogbAviwJEUoAdT/exec"; // 본인의 웹 앱 URL로 교체
+
+        async function initDashboard() {
+            try {
+                const response = await fetch(GAS_URL);
+                const result = await response.json();
+
+                if (result.status === "success") {
+                    // 1. 프로필 업데이트
+                    document.getElementById('user-name').innerText = result.user.name;
+                    document.getElementById('user-role').innerText = result.user.role;
+                    document.getElementById('user-status').innerText = result.user.status;
+
+                    // 2. 일정 리스트 업데이트
+                    const listBody = document.getElementById('schedule-list');
+                    result.schedules.forEach(item => {
+                        const statusClass = item.status === '완료' ? 'status-done' : 'status-ing';
+                        const row = `
+                            <tr>
+                                <td>${item.date}</td>
+                                <td>${item.type}</td>
+                                <td><span class="badge ${statusClass}">${item.status}</span></td>
+                                <td>${Number(item.fee).toLocaleString()}원</td>
+                            </tr>
+                        `;
+                        listBody.innerHTML += row;
+                    });
+
+                    // 화면 표시
+                    document.getElementById('loader').style.display = 'none';
+                    document.getElementById('profile-card').style.display = 'block';
+                    document.getElementById('schedule-container').style.display = 'block';
+                }
+            } catch (error) {
+                document.getElementById('loader').innerText = "데이터 로드 실패";
+                console.error(error);
+            }
+        }
+
+        initDashboard();
+    </script>
+</body>
+</html>
